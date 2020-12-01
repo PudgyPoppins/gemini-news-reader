@@ -5,7 +5,7 @@ from datetime import datetime
 import hashlib
 
 MAX_SAVED_ARTICLES = 100
-GEMPATH = '/home/pine/public_gemini/'
+GEMPATH = 'PATH WHERE YOU SERVE GEMINI FILES HERE (must end with a slash)/'
 urls_linkPath = {"NPR": {"https://text.npr.org/": 'body div.topic-container ul li a'}, "CNN": {'http://lite.cnn.com/en': 'body div ul li a'},} #"Christian Science Monitor": {'https://www.csmonitor.com/layout/set/text/textedition': 'body div#csm-page-content ul li a.ezc-csm-story-link'}}
 
 def hash_bytestr_iter(bytesiter, hasher, ashexstr=False):
@@ -38,10 +38,10 @@ def process_input(url=None, html=None, display=None):
         header += "-" * 31 + "\n"
 
         if display and url:
-            f = open(GEMPATH + "articles/%s-%s.gmi" % (get_hash(url), now.timestamp()), "w")
+            f = open(GEMPATH + "articles/%s-%.6f.gmi" % (get_hash(url), now.timestamp()), "w")
             f.write(header + body)
             f.close()
-            name = f.name.split("/")[1]
+            name = f.name.split('/')[-1]
 
         #This might've been updating a file, in which case it's important to delete the old file, and update the database
         search = [i for i in next(os.walk(GEMPATH + 'articles'))[2] if i[:32]==get_hash(url)]
@@ -58,6 +58,7 @@ def process_input(url=None, html=None, display=None):
     except Exception as e:
         print(e)
         return None
+
 if not os.path.exists(GEMPATH + 'articles'):
     os.makedirs(GEMPATH + 'articles')
 connection = sqlite3.connect(GEMPATH + "articles/articles.db")
@@ -92,9 +93,9 @@ for name, url_linkPath in urls_linkPath.items():
                     else:
                         #get the content/filename and write the .gmi file
                         x = process_input(url=path, html=str(soup(page, 'html.parser')), display=name + " - " + a.text)
-                        if len(x)>1 and not x is None:
+                        if not x is None and len(x)>1:
                             #^only run this section if it outputs content, and a file
-                            date = datetime.strftime(datetime.fromtimestamp(float(x[1][33:48])), '%Y-%m-%dT%H:%M:%S')
+                            date = datetime.strftime(datetime.fromtimestamp(float(x[1][-21:-4])), '%Y-%m-%dT%H:%M:%S')
                             #add it into the database
                             search = cursor.execute("SELECT source, title FROM article where url = ? AND md5sum != ?", (path, sum,),).fetchall()
                             if search:
@@ -124,7 +125,7 @@ def clean_up():
     lines = ["# Gemini News Reader", "## Read today's articles:"]
     name_query = cursor.execute("SELECT filename, source, title, date FROM article WHERE date >= %s ORDER BY date DESC" % datetime.today().strftime("%Y-%m-%d")).fetchall()
     for i in name_query:
-        if i[0] in saved:
+        if i[0] in next(os.walk(GEMPATH + 'articles'))[2]:
             name = i[1] + " - " + i[2]
             lines.append("=>/articles/" + i[0] + " " + name)
     body = "\n".join(lines)
