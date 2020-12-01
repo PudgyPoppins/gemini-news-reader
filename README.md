@@ -10,6 +10,7 @@ If you want to create your own gemini news feed, go ahead! However, I created th
 
 * Clone this Github repo
 * cd inside and run `npm install` (must have node.js and npm installed)
+* run `pip3 install -r requirements.txt`
 * run the crawler with `python3 crawler.py`
     * change how many articles you want to store max with `MAX_SAVED_ARTILCES`
     * change the file path where you save the index page and articles with `GEM_PATH`

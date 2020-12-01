@@ -58,7 +58,8 @@ def process_input(url=None, html=None, display=None):
     except Exception as e:
         print(e)
         return None
-
+if not os.path.exists(GEMPATH + 'articles'):
+    os.makedirs(GEMPATH + 'articles')
 connection = sqlite3.connect(GEMPATH + "articles/articles.db")
 cursor = connection.cursor()
 tables = cursor.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
@@ -75,7 +76,7 @@ for name, url_linkPath in urls_linkPath.items():
 
         skip_count = 0
         for a in a_list:
-M            if a.get("href"):
+            if a.get("href"):
                 try:
                     path = p_url.scheme + "://" + p_url.netloc + a['href']
                     page = requests.get(path).text
